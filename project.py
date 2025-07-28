@@ -1,6 +1,8 @@
+
 import pygame
 import random
 import sys
+import os
 
 # Initialize Pygame
 pygame.init()
@@ -9,6 +11,21 @@ pygame.init()
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Player vs Enemies")
+
+# Load background image with error handling
+try:
+    background_image = pygame.image.load("background.png").convert()
+except pygame.error:
+    print("Error: 'background.png' not found.")
+    background_image = pygame.Surface((WIDTH, HEIGHT))
+    background_image.fill((200, 200, 200))  # fallback plain background
+
+# Load and play background music with error handling
+try:
+    pygame.mixer.music.load("rubble-crash-275691.mp3")
+    pygame.mixer.music.play(-1)  # Loop music indefinitely
+except pygame.error:
+    print("Error: 'background.mp3' not found or could not be played.")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -41,8 +58,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.y -= self.speed
         if keys[pygame.K_DOWN]:
             self.rect.y += self.speed
-
-        # Keep player within screen bounds
         self.rect.clamp_ip(screen.get_rect())
 
 # Enemy class
@@ -84,14 +99,23 @@ while running:
     collided_enemies = pygame.sprite.spritecollide(player, enemies, True)
     score += len(collided_enemies)
 
-    # Draw
-    screen.fill(WHITE)
+    # Respawn enemies
+    for enemy in collided_enemies:
+        new_enemy = Enemy()
+        all_sprites.add(new_enemy)
+        enemies.add(new_enemy)
+
+    # Draw background
+    screen.blit(background_image, (0, 0))
+
+    # Draw sprites
     all_sprites.draw(screen)
 
     # Display score
     score_text = font.render(f"Score: {score}", True, (0, 0, 0))
     screen.blit(score_text, (10, 10))
 
+    # Update display
     pygame.display.flip()
 
 pygame.quit()
